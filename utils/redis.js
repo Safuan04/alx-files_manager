@@ -1,17 +1,18 @@
-const { promisify } = require('util');
+/* eslint-disable consistent-return */
+import { promisify } from 'util';
 import { createClient } from 'redis';
 
 class RedisClient {
   constructor() {
-    this.client = createClient()
+    this.client = createClient();
     this.isConnected = true;
     this.client.on('error', (err) => {
       console.error(err);
       this.isConnected = false;
-    })
+    });
     this.client.on('connect', () => {
       this.isConnected = true;
-    })
+    });
   }
 
   isAlive() {
@@ -28,9 +29,9 @@ class RedisClient {
   }
 
   async set(key, value, duration) {
-    const asyncSet = promisify(this.client.setex).bind(this.client);
+    const asyncSetex = promisify(this.client.setex).bind(this.client);
     try {
-      return await asyncSet(key, duration, value);
+      await asyncSetex(key, duration, value);
     } catch (err) {
       console.error(err);
     }
@@ -39,13 +40,13 @@ class RedisClient {
   async del(key) {
     const asyncDel = promisify(this.client.del).bind(this.client);
     try {
-      return await asyncDel(key);
+      await asyncDel(key);
     } catch (err) {
       console.error(err);
     }
   }
 }
 
-const redisClient = new RedisClient()
+const redisClient = new RedisClient();
 
 module.exports = redisClient;
