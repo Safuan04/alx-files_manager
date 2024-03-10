@@ -8,9 +8,11 @@ class AppController {
     );
   }
 
-  static getStats(req, res) {
+  static async getStats(req, res) {
+    const nbFiles = await dbClient.nbFiles();
+    const nbUsers = await dbClient.nbUsers();
     return res.status(200).json(
-      { users: dbClient.nbUsers(), files: dbClient.nbFiles() },
+      { users: nbUsers, files: nbFiles },
     );
   }
 }
