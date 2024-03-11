@@ -5,12 +5,12 @@ const fs = require('fs');
 const redisClient = require('../utils/redis');
 const dbClient = require('../utils/db');
 
-const db = dbClient.client.db(dbClient.dbName);
-const collectionFiles = db.collection('files');
-const collectionUsers = db.collection('users');
-
 class FilesController {
   static async postUpload(req, res) {
+    const db = dbClient.client.db(dbClient.dbName);
+    const collectionFiles = db.collection('files');
+    const collectionUsers = db.collection('users');
+
     const token = req.headers['x-token'];
     const userId = await redisClient.get(`auth_${token}`);
 
