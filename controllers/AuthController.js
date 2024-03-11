@@ -9,6 +9,10 @@ const collection = db.collection('users');
 class AuthController {
   static async getConnect(req, res) {
     const { authorization } = req.headers;
+    if (!authorization) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
     const authCode = authorization.split(' ')[1];
     const credentials = Buffer.from(authCode, 'base64').toString().split(':');
 
@@ -42,7 +46,7 @@ class AuthController {
     }
 
     await redisClient.del(`auth_${authToken}`);
-    return res.status(204);
+    return res.status(204).send('');
   }
 }
 
