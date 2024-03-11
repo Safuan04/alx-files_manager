@@ -31,9 +31,6 @@ class FilesController {
     if (!name) {
       return res.status(400).json({ error: 'Missing name' });
     }
-    if (!isPublic) {
-      isPublic = false;
-    }
     if (!type || !typesAllowed.includes(type)) {
       return res.status(400).json({ error: 'Missing type' });
     }
@@ -49,9 +46,9 @@ class FilesController {
         return res.status(400).json({ error: 'Parent is not a folder' });
       }
     }
-    if (!parentId) {
-      parentId = 0;
-    }
+
+    parentId = parentId || 0;
+    isPublic = isPublic || false;
 
     if (type === 'folder') {
       const insertedFile = await collectionFiles.insertOne({
@@ -84,7 +81,7 @@ class FilesController {
     const filePath = `${folderPath}/${fileName}`;
     const dataDecoded = Buffer.from(data, 'base64').toString();
 
-    fs.writeFile(filePath, dataDecoded, (err) => {
+    fs.writeFile(filePath, dataDecoded, 'utf-8', (err) => {
       if (err) {
         console.error('Error writing file:', err);
       }
