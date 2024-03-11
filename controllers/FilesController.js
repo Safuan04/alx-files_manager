@@ -69,21 +69,19 @@ class FilesController {
     }
 
     const folderPath = env.FOLDER_PATH || '/tmp/files_manager';
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdir(folderPath, { recursive: true }, (err) => {
-        if (err) {
-          console.error('Error creating directory:', err);
-        }
-      });
-    }
-
     const fileName = uuidv4();
     const filePath = `${folderPath}/${fileName}`;
     const dataDecoded = Buffer.from(data, 'base64').toString();
 
-    fs.writeFile(filePath, dataDecoded, 'utf-8', (err) => {
+    fs.mkdir(folderPath, { recursive: true }, (err) => {
       if (err) {
-        console.error('Error writing file:', err);
+        console.error(err);
+      } else {
+        fs.writeFile(filePath, dataDecoded, 'utf-8', (err) => {
+          if (err) {
+            console.error(err);
+          }
+        });
       }
     });
 
