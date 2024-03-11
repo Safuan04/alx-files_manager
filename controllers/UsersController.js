@@ -37,7 +37,7 @@ class UsersController {
     }
 
     const user = await collection.findOne({ _id: new ObjectID(userId) });
-    return res.json({ id: userId, email: user.email });
+    return res.status(200).json({ id: userId, email: user.email });
   }
 }
 

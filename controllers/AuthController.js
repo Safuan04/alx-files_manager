@@ -10,9 +10,14 @@ class AuthController {
   static async getConnect(req, res) {
     const { authorization } = req.headers;
     const authCode = authorization.split(' ')[1];
-    const credentials = Buffer.from(authCode, 'base64').toString();
-    const authEmail = credentials.split(':')[0];
-    const authPwd = credentials.split(':')[1];
+    const credentials = Buffer.from(authCode, 'base64').toString().split(':');
+
+    if (credentials.length !== 2) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const authEmail = credentials[0];
+    const authPwd = credentials[1];
     const hashedAuthPwd = sha1(authPwd);
 
     const user = await collection.findOne({ email: authEmail, password: hashedAuthPwd });
