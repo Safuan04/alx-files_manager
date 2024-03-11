@@ -70,7 +70,7 @@ class FilesController {
 
     const folderPath = env.FOLDER_PATH || '/tmp/files_manager';
     if (!fs.existsSync(folderPath)) {
-      fs.mkdir(folderPath, (err) => {
+      fs.mkdir(folderPath, { recursive: true }, (err) => {
         if (err) {
           console.error('Error creating directory:', err);
         }
