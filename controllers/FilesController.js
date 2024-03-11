@@ -1,5 +1,5 @@
 const { ObjectID } = require('mongodb');
-const env = require('process');
+const { env } = require('process');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const redisClient = require('../utils/redis');
