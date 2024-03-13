@@ -47,12 +47,16 @@ class FilesController {
       }
     }
 
-    parentId = parentId || 0;
+    if (parentId) {
+      parentId = new ObjectID(parentId);
+    } else {
+      parentId = 0;
+    }
     isPublic = isPublic || false;
 
     if (type === 'folder') {
       const insertedFile = await collectionFiles.insertOne({
-        userId,
+        userId: new ObjectID(userId),
         name,
         type,
         isPublic,
@@ -86,7 +90,7 @@ class FilesController {
     });
 
     const newFile = await collectionFiles.insertOne({
-      userId,
+      userId: new ObjectID(userId),
       name,
       type,
       isPublic,
