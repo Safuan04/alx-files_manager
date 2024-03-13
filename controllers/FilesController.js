@@ -5,12 +5,12 @@ const fs = require('fs');
 const redisClient = require('../utils/redis');
 const dbClient = require('../utils/db');
 
+const db = dbClient.client.db(dbClient.dbName);
+const collectionFiles = db.collection('files');
+const collectionUsers = db.collection('users');
+
 class FilesController {
   static async postUpload(req, res) {
-    const db = dbClient.client.db(dbClient.dbName);
-    const collectionFiles = db.collection('files');
-    const collectionUsers = db.collection('users');
-
     const token = req.headers['x-token'];
     const userId = await redisClient.get(`auth_${token}`);
 
@@ -106,6 +106,78 @@ class FilesController {
       isPublic,
       parentId,
     });
+  }
+
+  static async getShow(req, res) {
+    const token = req.headers['x-token'];
+    const userId = await redisClient.get(`auth_${token}`);
+    const user = await collectionUsers.findOne({ _id: new ObjectID(userId) });
+
+    if (!user || !userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { id } = req.params;
+    const file = await collectionFiles.findOne({
+      _id: new ObjectID(id),
+      userId: new ObjectID(userId),
+    });
+
+    if (!file) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    return res.status(200).json({
+      _id: file._id,
+      userId,
+      name: file.name,
+      type: file.type,
+      isPublic: file.isPublic,
+      parentId: file.parentId,
+    });
+  }
+
+  static async getIndex(req, res) {
+    const token = req.headers['x-token'];
+    const userId = await redisClient.get(`auth_${token}`);
+    const user = await collectionUsers.findOne({ _id: new ObjectID(userId) });
+
+    if (!user || !userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { parentId } = req.query;
+    let { page } = req.query;
+    page = page || 0;
+
+    let pipeline;
+    let files;
+    if (parentId) {
+      pipeline = [
+        { $match: { parentId: ObjectID(parentId) } },
+        { $skip: page * 20 },
+        { $limit: 20 },
+      ];
+      files = await collectionFiles.aggregate(pipeline).toArray();
+    } else {
+      pipeline = [{ $skip: page * 20 }, { $limit: 20 }];
+      files = await collectionFiles.aggregate(pipeline).toArray();
+    }
+    const filesRespList = [];
+    if (files.length === 0) {
+      return res.status(200).json([]);
+    }
+    files.forEach((file) => {
+      filesRespList.push({
+        id: file._id,
+        userId: file.userId,
+        name: file.name,
+        type: file.type,
+        isPublic: file.isPublic,
+        parentId: file.parentId,
+      });
+    });
+    return res.status(200).json(filesRespList);
   }
 }
 
