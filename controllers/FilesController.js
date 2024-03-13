@@ -179,6 +179,84 @@ class FilesController {
     });
     return res.status(200).json(filesRespList);
   }
+
+  static async putPublish(req, res) {
+    const token = req.headers['x-token'];
+    const userId = await redisClient.get(`auth_${token}`);
+    const user = await collectionUsers.findOne({ _id: new ObjectID(userId) });
+
+    if (!user || !userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { id } = req.params;
+    let file = await collectionFiles.findOne({
+      _id: new ObjectID(id),
+      userId: new ObjectID(userId),
+    });
+
+    if (!file) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    await collectionFiles.updateOne(
+      { _id: new ObjectID(id) },
+      { $set: { isPublic: true } },
+    );
+
+    file = await collectionFiles.findOne({
+      _id: new ObjectID(id),
+      userId: new ObjectID(userId),
+    });
+
+    return res.status(200).json({
+      _id: file._id,
+      userId,
+      name: file.name,
+      type: file.type,
+      isPublic: file.isPublic,
+      parentId: file.parentId,
+    });
+  }
+
+  static async putUnpublish(req, res) {
+    const token = req.headers['x-token'];
+    const userId = await redisClient.get(`auth_${token}`);
+    const user = await collectionUsers.findOne({ _id: new ObjectID(userId) });
+
+    if (!user || !userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { id } = req.params;
+    let file = await collectionFiles.findOne({
+      _id: new ObjectID(id),
+      userId: new ObjectID(userId),
+    });
+
+    if (!file) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    await collectionFiles.updateOne(
+      { _id: new ObjectID(id) },
+      { $set: { isPublic: false } },
+    );
+
+    file = await collectionFiles.findOne({
+      _id: new ObjectID(id),
+      userId: new ObjectID(userId),
+    });
+
+    return res.status(200).json({
+      _id: file._id,
+      userId,
+      name: file.name,
+      type: file.type,
+      isPublic: file.isPublic,
+      parentId: file.parentId,
+    });
+  }
 }
 
 module.exports = FilesController;
