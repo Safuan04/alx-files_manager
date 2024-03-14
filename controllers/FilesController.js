@@ -1,3 +1,6 @@
+import { promisify } from 'util';
+
+const mime = require('mime-types');
 const { ObjectID } = require('mongodb');
 const { env } = require('process');
 const { v4: uuidv4 } = require('uuid');
@@ -256,6 +259,43 @@ class FilesController {
       isPublic: file.isPublic,
       parentId: file.parentId,
     });
+  }
+
+  static async getFile(req, res) {
+    const token = req.headers['x-token'];
+    const { id } = req.params;
+    const userId = await redisClient.get(`auth_${token}`);
+    const file = await collectionFiles.findOne({ _id: ObjectID(id) });
+
+    if (!file) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    if (!file.isPublic && (!userId || file.userId.toString() !== userId)) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    if (file.type === 'folder') {
+      return res.status(400).json({ error: 'A folder doesn\'t have content' });
+    }
+
+    // check if localPath of the file exists
+    const asyncAccess = promisify(fs.access);
+    try {
+      await asyncAccess(file.localPath, fs.constants.F_OK);
+    } catch (err) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    // Reading the content from the file if exists
+    const asyncReadFile = promisify(fs.readFile);
+    const fileContent = await asyncReadFile(file.localPath, 'utf-8');
+
+    // Defining Content Type using the mime module
+    const fileType = mime.lookup(file.name);
+
+    res.status(200).setHeader('Content-Type', fileType);
+    return res.send(fileContent);
   }
 }
 
